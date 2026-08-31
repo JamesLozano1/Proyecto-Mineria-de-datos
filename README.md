@@ -23,7 +23,7 @@ El objetivo es identificar patrones de crecimiento y composición del catálogo 
 ## Estructura del repositorio
 
 ```
-├── data/
+├── CSV/
 │   └── netflix_titles.csv
 ├── notebooks/
 │   └── analisis_exploratorio.ipynb
@@ -31,19 +31,6 @@ El objetivo es identificar patrones de crecimiento y composición del catálogo 
 └── requirements.txt
 ```
 
-## Cómo ejecutar el proyecto
-
-```bash
-# Clonar el repositorio
-git clone <url-del-repositorio>
-cd <nombre-del-repositorio>
-
-# Instalar dependencias
-pip install -r requirements.txt
-
-# Ejecutar el notebook
-jupyter notebook notebooks/analisis_exploratorio.ipynb
-```
 
 ## Autor
 
