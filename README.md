@@ -39,10 +39,11 @@ El proyecto sigue las seis fases de CRISP-DM:
 El pipeline está construido en Python con clases separadas por responsabilidad:
 
 - **`LectorDatos`** — carga los archivos CSV con Pandas.
-- **`LimpiadorDatos`** — elimina duplicados, reemplaza nulos, convierte fechas, normaliza géneros/países y procesa la duración.
-- **`AnalizadorDatos`** — calcula los conteos, promedios y estadísticas descriptivas para cada pregunta del proyecto.
+- **`LimpiadorDatos`** — elimina duplicados, reemplaza nulos, convierte fechas, normaliza géneros/países, procesa la duración y corrige valores de `rating` sospechosos (desplazados por errores de captura en el dataset original).
+- **`AnalizadorDatos`** — calcula los conteos, promedios y estadísticas descriptivas para cada pregunta del proyecto, incluyendo el cruce entre ambos datasets para relacionar género y valoración de usuarios (`analizarValoracionPorGenero`).
 - **`VisualizadorDatos`** — genera las gráficas de barras y de línea a partir de los resultados del análisis.
-- **`main.py`** — orquesta el pipeline completo: extracción → limpieza → análisis → visualización.
+- **`ExportadorDatos`** — genera los datasets finales del proyecto: el dataset enriquecido (catálogo limpio + columnas calculadas como `durationValue` y `antiguedad_al_agregar`) y un resumen consolidado de todos los análisis, ambos como CSV en `CSV/resultados/`.
+- **`main.py`** — orquesta el pipeline completo: extracción → limpieza → análisis → visualización → exportación.
 
 ## Tecnologías
 
@@ -53,12 +54,16 @@ El pipeline está construido en Python con clases separadas por responsabilidad:
 ```
 ├── CSV/
 │   ├── netflix_titles.csv
-│   └── netflix.csv
+│   ├── netflix.csv
+│   └── resultados/
+│       ├── netflix_dataset_procesado.csv
+│       └── resumen_analisis.csv
 ├── src/
 │   ├── lectorDatos.py
 │   ├── limpiadorDatos.py
 │   ├── analizadorDatos.py
-│   └── visualizadorDatos.py
+│   ├── visualizadorDatos.py
+│   └── exportadorDatos.py
 ├── main.py
 └── README.md
 ```
