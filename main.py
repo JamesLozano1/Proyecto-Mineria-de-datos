@@ -2,6 +2,7 @@ from src.lectorDatos import LectorDatos
 from src.limpiadorDatos import LimpiadorDatos
 from src.analizadorDatos import AnalizadorDatos
 from src.visualizadorDatos import VisualizadorDatos
+from src.exportadorDatos import ExportadorDatos
 
 
 # ==========================================
@@ -241,4 +242,45 @@ visualizador.mostrarGraficaBarras(
     "Distribución de las valoraciones de usuarios",
     "Puntuación",
     "Cantidad de títulos"
+)
+
+# ==========================================
+# EXPORTACIÓN DE DATASETS FINALES
+# ==========================================
+
+print("\n==========================================")
+print("       EXPORTANDO DATASETS FINALES")
+print("==========================================")
+
+exportador = ExportadorDatos("./CSV/resultados")
+
+# --- Dataset enriquecido: dataset principal + columnas calculadas ---
+# (durationValue, added_year, antiguedad_al_agregar)
+
+datosEnriquecidos = analizador.obtenerDatosEnriquecidos()
+
+exportador.exportarDatosEnriquecidos(
+    datosEnriquecidos,
+    "netflix_dataset_procesado.csv"
+)
+
+# --- Dataset resumen: resultados de todos los análisis en un solo archivo ---
+
+resumenAnalisis = {
+    "Tipos de contenido": analizador.analizarTipos(),
+    "Títulos por año de lanzamiento": analizador.analizarAños(),
+    "Clasificaciones": analizador.analizarClasificaciones(),
+    "Principales países": analizadorPaises.analizarPaises(),
+    "Principales géneros": analizadorGeneros.analizarGeneros(),
+    "Títulos agregados a Netflix por año": analizador.analizarTitulosAgregadosPorAño(),
+    "Duración de las películas": analizador.analizarDuracionPeliculas(),
+    "Duración de las series": analizador.analizarDuracionSeries(),
+    "Antigüedad al agregar": analizador.calcularAntiguedadAlAgregar(),
+    "Valoraciones de usuarios": analizadorValoraciones.analizarValoraciones(),
+    "Distribución de valoraciones": analizadorValoraciones.analizarDistribucionValoraciones(),
+}
+
+exportador.exportarResumenAnalisis(
+    resumenAnalisis,
+    "resumen_analisis.csv"
 )

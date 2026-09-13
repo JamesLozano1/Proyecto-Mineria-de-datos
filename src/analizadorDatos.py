@@ -118,3 +118,26 @@ class AnalizadorDatos:
             - datosConFecha["release_year"]
         )
         return datosConFecha["antiguedad"].describe()
+
+    def obtenerDatosEnriquecidos(self):
+        """
+        Devuelve el dataset completo con todas las columnas calculadas
+        durante el análisis (año de incorporación a Netflix y antigüedad
+        al agregar), listo para exportarse como dataset final del proyecto.
+
+        No modifica self.datos: trabaja sobre una copia.
+        """
+        datosEnriquecidos = self.datos.copy()
+
+        if "date_added" in datosEnriquecidos.columns:
+            datosEnriquecidos["added_year"] = (
+                datosEnriquecidos["date_added"].dt.year
+            )
+
+        if "added_year" in datosEnriquecidos.columns and "release_year" in datosEnriquecidos.columns:
+            datosEnriquecidos["antiguedad_al_agregar"] = (
+                datosEnriquecidos["added_year"]
+                - datosEnriquecidos["release_year"]
+            )
+
+        return datosEnriquecidos
