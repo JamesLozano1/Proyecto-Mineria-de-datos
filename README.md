@@ -1,6 +1,6 @@
 # 📊 Análisis Exploratorio y Series de Tiempo del Catálogo de Netflix
 
-Proyecto de minería de datos desarrollado, enfocado en el análisis exploratorio del catálogo de Netflix a partir del dataset público `netflix_titles.csv` (8.807 títulos entre películas y series).
+Proyecto de minería de datos desarrollado bajo la metodología **CRISP-DM**, enfocado en el análisis exploratorio del catálogo de Netflix a partir del dataset público `netflix_titles.csv` (8.807 títulos entre películas y series).
 
 El objetivo es identificar patrones de crecimiento y composición del catálogo a lo largo del tiempo, respondiendo preguntas como:
 
