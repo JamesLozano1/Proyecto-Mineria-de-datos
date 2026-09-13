@@ -238,11 +238,12 @@ visualizador.mostrarGraficaBarras(
 
 
 visualizador.mostrarGraficaBarras(
-    analizadorValoraciones.analizarDistribucionValoraciones(),
-    "Distribución de las valoraciones de usuarios",
-    "Puntuación",
-    "Cantidad de títulos"
+    analizadorValoraciones.analizarValoracionPorGenero(datosLimpios),
+    "Valoración promedio de usuarios por género",
+    "Género",
+    "Puntuación promedio"
 )
+
 
 # ==========================================
 # EXPORTACIÓN DE DATASETS FINALES
@@ -277,7 +278,7 @@ resumenAnalisis = {
     "Duración de las series": analizador.analizarDuracionSeries(),
     "Antigüedad al agregar": analizador.calcularAntiguedadAlAgregar(),
     "Valoraciones de usuarios": analizadorValoraciones.analizarValoraciones(),
-    "Distribución de valoraciones": analizadorValoraciones.analizarDistribucionValoraciones(),
+    "Valoración por género": analizadorValoraciones.analizarValoracionPorGenero(datosLimpios),
 }
 
 exportador.exportarResumenAnalisis(

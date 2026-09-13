@@ -1,3 +1,6 @@
+import pandas as pd
+
+
 class AnalizadorDatos:
 
     def __init__(self, datos):
@@ -78,6 +81,41 @@ class AnalizadorDatos:
             .sort_index()
         )
         return resultado
+
+    def analizarValoracionPorGenero(self, datosPrincipal, minimoTitulos=5):
+        """
+        Cruza este dataset de valoraciones (self.datos, debe tener
+        "title" y "user_rating_score") con el dataset principal
+        (datosPrincipal, debe tener "title" y "listed_in" sin explotar)
+        para calcular la valoración promedio de usuarios por género.
+
+        minimoTitulos: un género solo se incluye en el resultado si tiene
+        al menos esa cantidad de títulos valorados, para evitar promedios
+        poco representativos calculados sobre 1 o 2 títulos.
+        """
+        datosConValoracion = self.datos.dropna(
+            subset=["user_rating_score"]
+        )
+
+        principalUnico = datosPrincipal.drop_duplicates(
+            subset=["title"]
+        )[["title", "listed_in"]]
+
+        combinado = pd.merge(
+            datosConValoracion, principalUnico, on="title", how="inner"
+        )
+
+        combinado["listed_in"] = combinado["listed_in"].str.split(", ")
+        combinado = combinado.explode("listed_in")
+        combinado["listed_in"] = combinado["listed_in"].str.strip()
+
+        resumen = combinado.groupby("listed_in")["user_rating_score"].agg(
+            ["count", "mean"]
+        )
+        resumen = resumen[resumen["count"] >= minimoTitulos]
+        resumen = resumen.sort_values("mean", ascending=False)
+
+        return resumen["mean"]
 
     def obtenerPromedioDuracion(self):
         peliculas = self.datos[
