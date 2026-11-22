@@ -115,14 +115,14 @@ Títulos agregados a Netflix por año,2009,2.0
 Títulos agregados a Netflix por año,2010,1.0
 Títulos agregados a Netflix por año,2011,13.0
 Títulos agregados a Netflix por año,2012,3.0
-Títulos agregados a Netflix por año,2013,10.0
-Títulos agregados a Netflix por año,2014,23.0
-Títulos agregados a Netflix por año,2015,73.0
-Títulos agregados a Netflix por año,2016,418.0
-Títulos agregados a Netflix por año,2017,1164.0
-Títulos agregados a Netflix por año,2018,1625.0
-Títulos agregados a Netflix por año,2019,1999.0
-Títulos agregados a Netflix por año,2020,1878.0
+Títulos agregados a Netflix por año,2013,11.0
+Títulos agregados a Netflix por año,2014,24.0
+Títulos agregados a Netflix por año,2015,82.0
+Títulos agregados a Netflix por año,2016,429.0
+Títulos agregados a Netflix por año,2017,1188.0
+Títulos agregados a Netflix por año,2018,1649.0
+Títulos agregados a Netflix por año,2019,2016.0
+Títulos agregados a Netflix por año,2020,1879.0
 Títulos agregados a Netflix por año,2021,1498.0
 Duración de las películas,count,6131.0
 Duración de las películas,mean,99.56499755341706
@@ -140,9 +140,9 @@ Duración de las series,25%,1.0
 Duración de las series,50%,1.0
 Duración de las series,75%,2.0
 Duración de las series,max,17.0
-Antigüedad al agregar,count,8709.0
-Antigüedad al agregar,mean,4.690894476977839
-Antigüedad al agregar,std,8.792208309401309
+Antigüedad al agregar,count,8797.0
+Antigüedad al agregar,mean,4.688416505626918
+Antigüedad al agregar,std,8.786998369254588
 Antigüedad al agregar,min,-3.0
 Antigüedad al agregar,25%,0.0
 Antigüedad al agregar,50%,1.0

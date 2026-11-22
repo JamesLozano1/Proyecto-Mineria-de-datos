@@ -51,6 +51,40 @@ class ModeloArbol:
         """Árbol sin entrenar, con la misma configuración (para compararlo con otros modelos)."""
         return DecisionTreeClassifier(max_depth=self.maxProfundidad, random_state=self.semilla)
 
+    def entrenarCompleto(self):
+        """Entrena con todos los títulos (es el modelo que se despliega; la evaluación usa entrenar())."""
+        self.modelo = self.estimador().fit(self.X, self.y)
+        return self.modelo
+
+    @staticmethod
+    def pregunta(variable, umbral):
+        """Convierte un corte técnico del árbol en una pregunta de sí/no."""
+        t = int(np.floor(umbral))
+        if variable == "temporadas":
+            return "¿Tiene más de %d %s?" % (t, "temporada" if t == 1 else "temporadas")
+        if variable == "minutos":
+            return "¿Es una película de más de %d minutos?" % t
+        if variable == "release_year":
+            return "¿Se estrenó después de %d?" % t
+        if variable == "infantil":
+            return "¿Es contenido infantil o familiar?"
+        if variable == "rating_level":
+            return "¿Su nivel de clasificación (rating_level) supera %d?" % t
+        nombres = {"Crime TV Shows": "una serie de crimen", "Romantic TV Shows": "una serie romántica"}
+        g = variable[2:]
+        return "¿Es %s?" % nombres.get(g, "del género " + g)
+
+    def explicarCamino(self, fila):
+        """Lista de (pregunta, respuesta) que recorre el árbol para una fila de variables."""
+        arbol = self.modelo.tree_
+        nodo, camino = 0, []
+        while arbol.children_left[nodo] != -1:
+            variable = self.variables[arbol.feature[nodo]]
+            va_derecha = fila[variable] > arbol.threshold[nodo]
+            camino.append((self.pregunta(variable, arbol.threshold[nodo]), "Sí" if va_derecha else "No"))
+            nodo = arbol.children_right[nodo] if va_derecha else arbol.children_left[nodo]
+        return camino
+
     def entrenar(self):
         self.Xtr, self.Xte, self.ytr, self.yte = train_test_split(
             self.X, self.y, test_size=0.30, stratify=self.y, random_state=self.semilla)
