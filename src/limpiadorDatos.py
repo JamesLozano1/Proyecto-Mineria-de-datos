@@ -28,8 +28,10 @@ class LimpiadorDatos:
         if "date_added" in self.datos.columns:
             # Asignación directa: esto SÍ cambia el dtype a datetime64 correctamente.
             # (usar .loc aquí rompe la conversión, ver explicación arriba)
+            # strip: 88 fechas del catálogo traen un espacio al inicio y se perdían
             self.datos["date_added"] = pd.to_datetime(
-                self.datos["date_added"], errors="coerce"
+                self.datos["date_added"].str.strip(),
+                errors="coerce", format="mixed"
             )
         return self.datos
 
