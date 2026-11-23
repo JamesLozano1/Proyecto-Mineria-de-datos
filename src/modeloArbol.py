@@ -85,6 +85,14 @@ class ModeloArbol:
             nodo = arbol.children_right[nodo] if va_derecha else arbol.children_left[nodo]
         return camino
 
+    def resumenHoja(self, fila):
+        """(títulos, con valoración alta) de la hoja del árbol a la que llega una fila."""
+        x = fila[self.variables].to_frame().T.astype(float)
+        hoja = self.modelo.apply(x)[0]
+        n = int(self.modelo.tree_.n_node_samples[hoja])
+        v = self.modelo.tree_.value[hoja][0]
+        return n, int(round(v[1] / v.sum() * n))
+
     def entrenar(self):
         self.Xtr, self.Xte, self.ytr, self.yte = train_test_split(
             self.X, self.y, test_size=0.30, stratify=self.y, random_state=self.semilla)
