@@ -13,6 +13,11 @@ from src.modeloKNN import ModeloKNN
 st.set_page_config(page_title="Netflix: catálogo y valoración",
                    page_icon="🎬", layout="wide")
 
+# Streamlit nuevo usa width="stretch"; las versiones anteriores usan use_container_width
+_version = tuple(int(p) for p in st.__version__.split(".")[:2] if p.isdigit())
+ANCHO = {"width": "stretch"} if _version >= (
+    1, 50) else {"use_container_width": True}
+
 # ---------------------------------------------------------------- paleta
 ROJO = "#E50914"
 AMBAR = "#F2B84B"
@@ -124,6 +129,105 @@ def kpi(numero, texto):
     return f'<div class="kpi"><div class="n">{html.escape(str(numero))}</div><div class="t">{html.escape(texto)}</div></div>'
 
 
+# ------------------------------------------------ gráficas (mismo diseño que VisualizadorDatos)
+PALETA = [ROJO, AMBAR, "#C9C1BA", "#8A1118", "#7A6F6A"]
+SIN_DATO = {"", "nan", "unknown", "desconocido",
+            "no disponible", "n/a", "none"}
+
+
+def _largo(datos):
+    """Convierte una Serie o un DataFrame de pandas al formato largo que usa Altair."""
+    if isinstance(datos, pd.Series):
+        df = datos.rename("valor").rename_axis("categoria").reset_index()
+        df["serie"] = str(datos.name) if datos.name is not None else "valor"
+        return df, False
+    df = datos.rename_axis("categoria").reset_index().melt(
+        "categoria", var_name="serie", value_name="valor")
+    return df, datos.shape[1] > 1
+
+
+def _formatoNumero(df):
+    """Eje con punto de miles si son enteros, un decimal si no lo son."""
+    if (df["valor"].dropna() % 1 == 0).all():
+        return {"labelExpr": "replace(format(datum.value, ',.0f'), /,/g, '.')"}, ",.0f"
+    return {"format": ".1f"}, ",.2f"
+
+
+def _titulo(texto):
+    return alt.TitleParams(texto, anchor="start", color=CREMA, fontSize=15, fontWeight="bold", offset=14)
+
+
+def graficaBarras(datos, titulo, etiquetaX, etiquetaY, alto=340):
+    """Barras con título, ejes rotulados, categorías inclinadas 45° y el valor sobre cada barra."""
+    df, multi = _largo(datos)
+    df["categoria"] = df["categoria"].astype(str)
+    ejeY, fmt = _formatoNumero(df)
+
+    base = alt.Chart(df).encode(
+        x=alt.X("categoria:N", sort=None, title=etiquetaX,
+                axis=alt.Axis(labelAngle=-45, labelLimit=170)),
+        y=alt.Y("valor:Q", title=etiquetaY, axis=alt.Axis(**ejeY)),
+    )
+    tooltip = [alt.Tooltip("categoria:N", title=etiquetaX), alt.Tooltip(
+        "valor:Q", title=etiquetaY, format=fmt)]
+
+    if multi:
+        series = list(df["serie"].unique())
+        barras = base.mark_bar(cornerRadiusTopLeft=3, cornerRadiusTopRight=3).encode(
+            color=alt.Color("serie:N", title=None, scale=alt.Scale(
+                domain=series, range=PALETA[: len(series)])),
+            tooltip=tooltip + [alt.Tooltip("serie:N", title="Serie")],
+        )
+        if hasattr(alt, "XOffset"):
+            barras = barras.encode(xOffset="serie:N")
+        grafico = barras
+    else:
+        barras = base.mark_bar(color=ROJO, cornerRadiusTopLeft=3,
+                               cornerRadiusTopRight=3).encode(tooltip=tooltip)
+        grafico = barras
+        if len(df) <= 15:
+            if fmt == ",.0f":
+                etiquetas = base.transform_calculate(etiqueta="replace(format(datum.valor, ',.0f'), /,/g, '.')").mark_text(
+                    dy=-8, color=CREMA, fontSize=11).encode(text="etiqueta:N")
+            else:
+                etiquetas = base.mark_text(
+                    dy=-8, color=CREMA, fontSize=11).encode(text=alt.Text("valor:Q", format=fmt))
+            grafico = barras + etiquetas
+    return grafico.properties(title=_titulo(titulo)), alto
+
+
+def graficaLinea(datos, titulo, etiquetaX, etiquetaY, alto=340):
+    """Línea con marcadores, cuadrícula, título y ejes rotulados."""
+    df, multi = _largo(datos)
+    tipo = "T" if pd.api.types.is_datetime64_any_dtype(
+        df["categoria"]) else "O"
+    ejeY, fmt = _formatoNumero(df)
+
+    base = alt.Chart(df).encode(
+        x=alt.X(f"categoria:{tipo}", sort=None, title=etiquetaX,
+                axis=alt.Axis(labelAngle=0, grid=True)),
+        y=alt.Y("valor:Q", title=etiquetaY, axis=alt.Axis(**ejeY)),
+        tooltip=[alt.Tooltip(f"categoria:{tipo}", title=etiquetaX), alt.Tooltip(
+            "valor:Q", title=etiquetaY, format=fmt)],
+    )
+    if multi:
+        series = list(df["serie"].unique())
+        linea = base.mark_line(strokeWidth=2.6, point=alt.OverlayMarkDef(filled=True, size=70)).encode(
+            color=alt.Color("serie:N", title=None, scale=alt.Scale(
+                domain=series, range=PALETA[: len(series)]))
+        )
+    else:
+        linea = base.mark_line(color=ROJO, strokeWidth=2.6, point=alt.OverlayMarkDef(
+            color=ROJO, filled=True, size=70))
+    return linea.properties(title=_titulo(titulo)), alto
+
+
+def mostrar(grafica, contenedor=st):
+    """Dibuja un gráfico creado con graficaBarras o graficaLinea, con el tema de la aplicación."""
+    grafico, alto = grafica
+    contenedor.altair_chart(estilo(grafico, alto), **ANCHO, theme=None)
+
+
 # ---------------------------------------------------------------- datos y modelos
 @st.cache_resource(show_spinner="Cargando datos y entrenando los modelos...")
 def cargar():
@@ -223,7 +327,9 @@ with pestanas[1]:
 
     es_serie = cat["type"].astype(str).str.contains(
         "TV|Serie", case=False, regex=True)
-    con_fecha = cat.dropna(subset=["date_added"])
+    con_fecha = cat.dropna(subset=["date_added"]).copy()
+    con_fecha["anio"] = con_fecha["date_added"].dt.year.astype(int)
+
     k1, k2, k3, k4 = st.columns(4)
     k1.markdown(kpi(f"{len(cat):,}".replace(",", "."),
                 "títulos en el catálogo"), unsafe_allow_html=True)
@@ -235,61 +341,68 @@ with pestanas[1]:
         k4.markdown(kpi(int(cat["release_year"].median()),
                     "año de lanzamiento típico"), unsafe_allow_html=True)
     else:
-        k4.markdown(kpi(int(con_fecha["date_added"].dt.year.max(
+        k4.markdown(kpi(int(con_fecha["anio"].max(
         )), "último año con títulos agregados"), unsafe_allow_html=True)
 
     st.write("")
-    a, b = st.columns([1, 2], gap="large")
 
-    with a:
-        st.markdown("**Películas y series**")
-        tipos = cat["type"].replace({"Movie": "Película", "TV Show": "Serie"}).value_counts(
-        ).rename_axis("tipo").reset_index(name="titulos")
-        dona = alt.Chart(tipos).mark_arc(innerRadius=62, stroke="#161213", strokeWidth=2).encode(
-            theta="titulos:Q",
-            color=alt.Color("tipo:N", title=None, scale=alt.Scale(
-                domain=["Película", "Serie"], range=[ROJO, AMBAR])),
-            tooltip=[alt.Tooltip("tipo:N", title="Tipo"),
-                     alt.Tooltip("titulos:Q", title="Títulos")],
-        )
-        st.altair_chart(estilo(dona, 300),
-                        use_container_width=True, theme=None)
+    # Datos de cada gráfica
+    por_tipo = cat["type"].replace(
+        {"Movie": "Película", "TV Show": "Serie"}).value_counts()
+    por_anio = con_fecha.groupby("anio").size()
+    generos_top = cat["listed_in"].str.split(
+        ",").explode().str.strip().value_counts().head(10)
 
-    with b:
-        st.markdown("**Títulos agregados por año**")
-        por_anio = con_fecha.groupby(con_fecha["date_added"].dt.year).size(
-        ).rename_axis("anio").reset_index(name="titulos")
-        area = alt.Chart(por_anio).mark_area(
-            line={"color": ROJO, "strokeWidth": 2.5}, color=alt.Gradient(
-                gradient="linear", stops=[alt.GradientStop(color="rgba(229,9,20,0.45)", offset=0), alt.GradientStop(color="rgba(229,9,20,0.02)", offset=1)],
-                x1=1, x2=1, y1=1, y2=0),
-            interpolate="monotone",
-        ).encode(
-            x=alt.X("anio:O", title="Año en que se agregó",
-                    axis=alt.Axis(labelAngle=0)),
-            y=alt.Y("titulos:Q", title="Títulos"),
-            tooltip=[alt.Tooltip("anio:O", title="Año"),
-                     alt.Tooltip("titulos:Q", title="Títulos")],
-        )
-        puntos = alt.Chart(por_anio).mark_circle(
-            size=60, color=ROJO).encode(x="anio:O", y="titulos:Q")
-        st.altair_chart(estilo(area + puntos, 300),
-                        use_container_width=True, theme=None)
+    # Fila 1: tipo y crecimiento
+    f1a, f1b = st.columns([1, 2], gap="large")
+    with f1a.container(border=True):
+        mostrar(graficaBarras(por_tipo, "Películas y series",
+                "Tipo de contenido", "Títulos", 320))
+    with f1b.container(border=True):
+        mostrar(graficaLinea(por_anio, "Títulos agregados por año",
+                "Año en que se agregó", "Títulos", 320))
 
-    st.markdown("**Géneros más frecuentes**")
-    top = cat["listed_in"].str.split(", ").explode().str.strip().value_counts().head(
-        10).rename_axis("genero").reset_index(name="titulos")
-    barras = alt.Chart(top).mark_bar(color=ROJO, cornerRadiusTopRight=4, cornerRadiusBottomRight=4).encode(
-        x=alt.X("titulos:Q", title="Títulos"),
-        y=alt.Y("genero:N", sort="-x", title=None,
-                axis=alt.Axis(labelLimit=240)),
-        tooltip=[alt.Tooltip("genero:N", title="Género"),
-                 alt.Tooltip("titulos:Q", title="Títulos")],
-    )
-    etiquetas = barras.mark_text(
-        align="left", dx=5, color=CREMA, fontSize=12).encode(text="titulos:Q")
-    st.altair_chart(estilo(barras + etiquetas, 340),
-                    use_container_width=True, theme=None)
+    # Fila 2: año de lanzamiento vs. año agregado, y antigüedad al agregar
+    if "release_year" in cat.columns and not por_anio.empty:
+        f2a, f2b = st.columns(2, gap="large")
+        desde, hasta = int(por_anio.index.min()), int(por_anio.index.max())
+        lanzados = cat["release_year"].dropna().astype(int).value_counts()
+        comparacion = pd.DataFrame({"Año en que se agregó": por_anio,
+                                   "Año de lanzamiento": lanzados}).loc[desde:hasta].fillna(0).astype(int)
+        with f2a.container(border=True):
+            mostrar(graficaLinea(
+                comparacion, "Agregados a Netflix vs. lanzados originalmente", "Año", "Títulos", 340))
+
+        antiguedad = (con_fecha["anio"] - con_fecha["release_year"]
+                      ).clip(lower=0).groupby(con_fecha["anio"]).mean().round(1)
+        antiguedad = antiguedad[con_fecha.groupby("anio").size() >= 10]
+        with f2b.container(border=True):
+            mostrar(graficaLinea(antiguedad, "Años entre el lanzamiento y la llegada a Netflix",
+                    "Año en que se agregó", "Años (promedio)", 340))
+            st.caption("Solo años con 10 títulos o más.")
+
+    # Fila 3: géneros y países
+    f3a, f3b = st.columns(2, gap="large")
+    with f3a.container(border=True):
+        mostrar(graficaBarras(generos_top,
+                "Géneros más frecuentes", "Género", "Títulos", 400))
+    if "country" in cat.columns:
+        paises = cat["country"].dropna().astype(
+            str).str.split(",").explode().str.strip()
+        paises = paises[~paises.str.lower().isin(
+            SIN_DATO)].value_counts().head(10)
+        with f3b.container(border=True):
+            mostrar(graficaBarras(
+                paises, "Países con más títulos", "País", "Títulos", 400))
+
+    # Fila 4: clasificación por edades
+    if "rating" in cat.columns:
+        clasif = cat["rating"].dropna().astype(str)
+        clasif = clasif[~clasif.str.lower().isin(
+            SIN_DATO)].value_counts().head(10)
+        with st.container(border=True):
+            mostrar(graficaBarras(clasif, "Clasificaciones más comunes",
+                    "Clasificación", "Títulos", 340))
 
 # ================================================================ GRUPOS
 with pestanas[2]:
@@ -310,7 +423,7 @@ with pestanas[2]:
 
         st.dataframe(
             perfiles,
-            use_container_width=True,
+            **ANCHO,
             hide_index=True,
             column_config={
                 "nombre": st.column_config.TextColumn("Grupo", width="medium"),
@@ -323,15 +436,8 @@ with pestanas[2]:
             },
         )
     with g2:
-        tam = alt.Chart(perfiles).mark_bar(color=ROJO, cornerRadiusTopRight=4, cornerRadiusBottomRight=4).encode(
-            x=alt.X("titulos:Q", title="Títulos"),
-            y=alt.Y("nombre:N", sort="-x", title=None,
-                    axis=alt.Axis(labelLimit=220)),
-            tooltip=[alt.Tooltip("nombre:N", title="Grupo"),
-                     alt.Tooltip("titulos:Q", title="Títulos")],
-        )
-        st.altair_chart(estilo(tam, max(200, 46 * len(perfiles))),
-                        use_container_width=True, theme=None)
+        mostrar(graficaBarras(perfiles.set_index("nombre")[
+                "titulos"], "Títulos por grupo", "Grupo", "Títulos", 420))
 
     st.info("Estructura débil (silhouette 0,35): los grupos son segmentos descriptivos, no categorías con fronteras nítidas.")
 
@@ -339,8 +445,7 @@ with pestanas[2]:
     texto = st.text_input("Busca un título", "Stranger",
                           placeholder="Escribe parte del nombre")
     if texto:
-        st.dataframe(s.buscarTitulo(texto),
-                     use_container_width=True, hide_index=True)
+        st.dataframe(s.buscarTitulo(texto), **ANCHO, hide_index=True)
 
 # ================================================================ MODELOS
 with pestanas[3]:
@@ -357,7 +462,7 @@ with pestanas[3]:
         t1, t2 = st.columns([3, 2], gap="large")
         with t1:
             st.markdown("**Resultados por modelo**")
-            st.dataframe(tabla, use_container_width=True)
+            st.dataframe(tabla, **ANCHO)
             st.caption(
                 f"Línea base (adivinar la clase más común): {base:.3f}. Validación cruzada repetida 5 × 10 con los mismos pliegues.")
         with t2:
@@ -381,11 +486,10 @@ with pestanas[3]:
                         color=AMBAR, strokeDash=[6, 4], strokeWidth=2).encode(y="base:Q")
                     capas = barras + linea
                     st.caption("La línea ámbar marca la línea base.")
-                st.altair_chart(estilo(capas, 280),
-                                use_container_width=True, theme=None)
+                st.altair_chart(estilo(capas, 280), **ANCHO, theme=None)
 
         st.markdown("**Diferencia frente al árbol (prueba pareada)**")
-        st.dataframe(pareada, use_container_width=True)
+        st.dataframe(pareada, **ANCHO)
         st.success(
             "Ninguna diferencia es estadísticamente significativa: usamos Naive Bayes para predecir y el árbol para explicar.")
     else:
