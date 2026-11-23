@@ -1,4 +1,42 @@
-# 📊 Análisis Exploratorio y Series de Tiempo del Catálogo de Netflix
+<div align="center">
+
+# 🎬 Catálogo de Netflix y valoración de usuarios
+
+**Análisis exploratorio, series de tiempo y modelos predictivos bajo la metodología CRISP-DM**
+
+![Python](https://img.shields.io/badge/Python-3.x-3776AB?style=flat-square&logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-app-E50914?style=flat-square&logo=streamlit&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-modelos-F7931E?style=flat-square&logo=scikitlearn&logoColor=white)
+![CRISP-DM](https://img.shields.io/badge/metodolog%C3%ADa-CRISP--DM-141414?style=flat-square)
+
+<br>
+
+### 🚀 Prueba la aplicación en vivo
+
+<a href="https://proyecto-mineria-de-datos-dnkxtxvcuqyzazzuplev4r.streamlit.app/">
+  <img src="https://static.streamlit.io/badges/streamlit_badge_black_white.svg" alt="Abrir la aplicación en Streamlit" height="44">
+</a>
+
+<sub>https://proyecto-mineria-de-datos-dnkxtxvcuqyzazzuplev4r.streamlit.app/</sub>
+
+</div>
+
+<br>
+
+> **Dentro de la aplicación encontrarás**
+>
+> | Pestaña | Qué puedes hacer |
+> |---|---|
+> | 🔮 **Predicción** | Describir un título y ver la probabilidad de que tenga una valoración alta (≥ 85). Naive Bayes predice y el árbol explica su decisión paso a paso. |
+> | 📊 **Catálogo** | Ver la composición del catálogo, su crecimiento por año y los géneros más frecuentes. |
+> | 🧩 **Grupos** | Explorar los grupos de títulos parecidos que encontró K-means y buscar a qué grupo pertenece un título. |
+> | ⚖️ **Modelos** | Comparar árbol de decisión, Naive Bayes y KNN con validación cruzada y prueba pareada. |
+>
+> *Si la aplicación estuvo un tiempo sin visitas, Streamlit Community Cloud la "duerme": pulsa el botón de reactivar y espera unos segundos.*
+
+---
+
+## 📚 Descripción del proyecto
 
 Proyecto de minería de datos desarrollado bajo la metodología **CRISP-DM**, enfocado en el análisis exploratorio del catálogo de Netflix y de las valoraciones de usuarios asociadas a su contenido.
 
@@ -25,7 +63,7 @@ El proyecto sigue las seis fases de CRISP-DM:
 3. **Preparación de los datos** – eliminación de duplicados, limpieza de nulos, conversión de fechas, normalización de géneros y países, extracción del valor numérico de duración.
 4. **Modelado** – análisis estadístico descriptivo, series de tiempo y visualizaciones (barras, líneas).
 5. **Evaluación** – validación de los hallazgos frente a las preguntas de negocio planteadas.
-6. **Despliegue** – presentación de resultados mediante gráficas y conclusiones.
+6. **Despliegue** – presentación de resultados mediante gráficas, conclusiones y una [aplicación web pública](https://proyecto-mineria-de-datos-dnkxtxvcuqyzazzuplev4r.streamlit.app/).
 
 ## Datasets
 
@@ -52,10 +90,13 @@ El pipeline está construido en Python con clases separadas por responsabilidad:
 ## Tecnologías
 
 - Python (Pandas, Matplotlib, scikit-learn)
+- Streamlit y Altair para la aplicación web
 
 ## Estructura del repositorio
 
 ```
+├── .streamlit/
+│   └── config.toml       (tema visual de la aplicación)
 ├── CSV/
 │   ├── netflix_titles.csv
 │   └── netflix.csv
@@ -121,10 +162,12 @@ Al ejecutar `main.py` se crea la carpeta `CSV/resultados/` con:
 
 ## Despliegue (fase de CRISP-DM)
 
-El proyecto se despliega como una **aplicación web en Streamlit** (`app.py`) con cuatro pestañas:
+El proyecto está publicado como una **aplicación web en Streamlit** (`app.py`) con cuatro pestañas:
 predicción de un título (Naive Bayes predice y el árbol explica paso a paso), análisis del catálogo,
 grupos de K-means y comparación de modelos. La capa `src/servicio.py` carga y limpia los datos y
 entrena los modelos finales con todos los títulos al iniciar.
+
+🔗 **Aplicación en producción:** https://proyecto-mineria-de-datos-dnkxtxvcuqyzazzuplev4r.streamlit.app/
 
 ```
 GitHub (código + CSV)  →  CI (pytest + pipeline)  →  Streamlit Community Cloud / Docker  →  URL pública
